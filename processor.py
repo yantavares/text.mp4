@@ -79,7 +79,8 @@ def process_video(video_path, font_images, output_img_dir, output_txt_dir, font_
 
 
 # Directory setup
-font_dir = 'cs/font'  # Directory containing the letter images
+font = 'ComicMono'
+font_dir = f'fonts/{font}_chars'  # Directory containing the letter images
 font_images = load_font_images(font_dir)
 
 # Process a video
