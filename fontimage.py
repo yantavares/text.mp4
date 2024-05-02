@@ -4,7 +4,7 @@ import os
 
 def textsize(text, font):
     """Get dimensions of the given text when rendered in the given font."""
-    im = Image.new(mode="P", size=(0, 0))
+    im = Image.new(mode="L", size=(0, 0))
     draw = ImageDraw.Draw(im)
     _, _, width, height = draw.textbbox((0, 0), text=text, font=font)
     return width, height
@@ -22,13 +22,12 @@ def create_images_from_font(font_path, output_dir, characters, image_size=(10, 1
 
     # Generate an image for each character
     for char in characters:
-        img = Image.new('RGB', image_size, color=(
-            255, 255, 255))  # white background
+        img = Image.new('L', image_size, color=255)  # white background
         d = ImageDraw.Draw(img)
         # Calculate text position: centered
         width, height = textsize(char, font)  # Using updated textsize function
         position = ((image_size[0] - width) / 2, (image_size[1] - height) / 2)
-        d.text(position, char, font=font, fill=(0, 0, 0))  # black text
+        d.text(position, char, font=font, fill=0)  # black text
 
         # Save the image using ASCII value to avoid file name issues with special characters
         img.save(os.path.join(output_dir, f"{ord(char)}.png"))

@@ -11,7 +11,7 @@ def load_font_images(font_dir):
             # Assuming filename is ASCII value of the character
             char = chr(int(filename.split('.')[0]))
             font_images[char] = np.array(Image.open(
-                os.path.join(font_dir, filename)).convert('RGB'))
+                os.path.join(font_dir, filename)))
     return font_images
 
 
@@ -29,7 +29,7 @@ def compare_matrices(image_segment, font_images):
 
 def process_image(img, font_images, font_size=20):
     width, height = img.size
-    output_image = Image.new('RGB', (width, height))
+    output_image = Image.new('L', (width, height))
     characters_grid = []
 
     for j in range(0, height, font_size):
