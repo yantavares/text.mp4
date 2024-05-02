@@ -106,6 +106,6 @@ output_txt_dir = 'output_text'
 
 start = time.time()
 process_video(video_path, font_images, output_img_dir,
-              output_txt_dir, font_size=10, max_workers=4)
+              output_txt_dir, font_size=10, max_workers=8)
 end = time.time()
 print(f"Processing took {end - start:.2f} seconds.")
