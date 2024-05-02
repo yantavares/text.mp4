@@ -2,6 +2,7 @@ import cv2
 from PIL import Image
 import numpy as np
 import os
+from concurrent.futures import ProcessPoolExecutor
 import time
 
 
@@ -46,36 +47,52 @@ def process_image(img, font_images, font_size=20):
     return output_image, characters_grid
 
 
-def process_video(video_path, font_images, output_img_dir, output_txt_dir, font_size=20):
+def process_frame(args):
+    frame, count, font_images, font_size, output_img_dir, output_txt_dir = args
+    img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
+    output_image, characters_grid = process_image(img, font_images, font_size)
+
+    frame_filename = f'frame_{str(count).zfill(10)}.png'
+    text_filename = f'frame_{str(count).zfill(10)}.txt'
+
+    print(f'Processed frame {count}')
+
+    output_image.save(os.path.join(output_img_dir, frame_filename))
+
+    with open(os.path.join(output_txt_dir, text_filename), 'w') as file:
+        for row in characters_grid:
+            file.write(''.join(row) + '\n')
+
+    return f'Processed frame {count}'
+
+
+def process_video(video_path, font_images, output_img_dir, output_txt_dir, font_size=20, max_workers=4):
     vidcap = cv2.VideoCapture(video_path)
     success, frame = vidcap.read()
+    frames = []
     count = 0
 
+    # Ensure directories exist
     if not os.path.exists(output_img_dir):
         os.makedirs(output_img_dir)
     if not os.path.exists(output_txt_dir):
         os.makedirs(output_txt_dir)
 
-    while success:
-        img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
-        output_image, characters_grid = process_image(
-            img, font_images, font_size)
-
-        print(f'Processing frame {count}')
-        frame_filename = f'frame_{str(count).zfill(10)}.png'
-        text_filename = f'frame_{str(count).zfill(10)}.txt'
-
-        output_image.save(os.path.join(output_img_dir, frame_filename))
-
-        with open(os.path.join(output_txt_dir, text_filename), 'w') as file:
-            for row in characters_grid:
-                file.write(''.join(row) + '\n')
-
+    # Prepare frames for processing
+    while success and count <= 100:  # Limit to 101 frames to avoid loading too many into memory
+        frames.append((frame, count, font_images, font_size,
+                      output_img_dir, output_txt_dir))
         success, frame = vidcap.read()
         count += 1
 
-        if count > 100:
-            break
+    # Process frames in parallel
+    with ProcessPoolExecutor(max_workers=max_workers) as executor:
+        results = executor.map(process_frame, frames)
+
+    for result in results:
+        print(result)
+
+    vidcap.release()  # Properly release the video capture object
 
 
 # Directory setup
@@ -88,6 +105,7 @@ output_img_dir = 'output_images'
 output_txt_dir = 'output_text'
 
 start = time.time()
-process_video(video_path, font_images, output_img_dir, output_txt_dir, 10)
+process_video(video_path, font_images, output_img_dir,
+              output_txt_dir, font_size=10, max_workers=4)
 end = time.time()
-print(f'Processing took {end - start:.2f} seconds')
+print(f"Processing took {end - start:.2f} seconds.")
