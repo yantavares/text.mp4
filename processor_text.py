@@ -25,37 +25,32 @@ def compare_matrices(image_segment, font_images):
         distance = np.linalg.norm(segment_array - font_image)
         if distance < min_distance:
             min_distance = distance
-            best_match = char, font_image
+            best_match = char
     return best_match
 
 
 def process_image(img, font_images, font_size=20):
     width, height = img.size
-    output_image = Image.new('L', (width, height))
     characters_grid = []
 
     for j in range(0, height, font_size):
         row_chars = []
         for i in range(0, width, font_size):
             segment = img.crop((i, j, i + font_size, j + font_size))
-            best_match_char, best_match_img = compare_matrices(
+            best_match_char = compare_matrices(
                 segment, font_images)
-            output_image.paste(Image.fromarray(best_match_img), (i, j))
             row_chars.append(best_match_char)
         characters_grid.append(row_chars)
 
-    return output_image, characters_grid
+    return characters_grid
 
 
 def process_frame(args):
-    frame, count, font_images, font_size, output_img_dir, output_txt_dir = args
+    frame, count, font_images, font_size, output_txt_dir = args
     img = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY))
-    output_image, characters_grid = process_image(img, font_images, font_size)
+    characters_grid = process_image(img, font_images, font_size)
 
-    frame_filename = f'frame_{str(count).zfill(10)}.png'
     text_filename = f'frame_{str(count).zfill(10)}.txt'
-
-    output_image.save(os.path.join(output_img_dir, frame_filename))
 
     with open(os.path.join(output_txt_dir, text_filename), 'w') as file:
         for row in characters_grid:
@@ -64,22 +59,20 @@ def process_frame(args):
     print(f'Processed frame {count}')
 
 
-def process_video(video_path, font_images, output_img_dir, output_txt_dir, font_size=20, max_workers=4):
+def process_video(video_path, font_images, output_txt_dir, font_size=20, max_workers=4):
     vidcap = cv2.VideoCapture(video_path)
     success, frame = vidcap.read()
     frames = []
     count = 0
 
     # Ensure directories exist
-    if not os.path.exists(output_img_dir):
-        os.makedirs(output_img_dir)
     if not os.path.exists(output_txt_dir):
         os.makedirs(output_txt_dir)
 
     # Prepare frames for processing
     while success and count <= 100:  # Limit to 101 frames to avoid loading too many into memory
         frames.append((frame, count, font_images, font_size,
-                      output_img_dir, output_txt_dir))
+                       output_txt_dir))
         success, frame = vidcap.read()
         count += 1
 
@@ -97,11 +90,11 @@ font_images = load_font_images(font_dir)
 
 # Process a video
 video_path = 'SampleVideo.mp4'
-output_img_dir = 'output_images'
 output_txt_dir = 'output_text'
 
 start = time.time()
-process_video(video_path, font_images, output_img_dir,
+print('Processing text only')
+process_video(video_path, font_images,
               output_txt_dir, font_size=10)
 end = time.time()
 print(f'Processing took {end - start:.2f} seconds')
