@@ -9,5 +9,8 @@ all: $(TARGET)
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRC) $(OPENCV)
 
+run: $(TARGET)
+	./$(TARGET)
+
 clean:
 	rm -f $(TARGET)

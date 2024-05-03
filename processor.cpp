@@ -14,19 +14,21 @@
 namespace fs = std::filesystem;
 std::mutex io_mutex;
 
-std::string formatNumber(int num, int length) {
+std::string formatNumber(int num, int length)
+{
     std::ostringstream oss;
     oss << std::setw(length) << std::setfill('0') << num;
     return oss.str();
 }
 
-
 // Function to load font images
-std::map<char, cv::Mat> load_font_images(const std::string &font_dir) {
+std::map<char, cv::Mat> load_font_images(const std::string &font_dir)
+{
     std::map<char, cv::Mat> font_images;
-    for (const auto &entry : fs::directory_iterator(font_dir)) {
-        if (entry.path().extension() == ".png") {
-            std::cout << entry.path().stem() << std::endl;
+    for (const auto &entry : fs::directory_iterator(font_dir))
+    {
+        if (entry.path().extension() == ".png")
+        {
             char char_code = static_cast<char>(std::stoi(entry.path().stem()));
             font_images[char_code] = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
         }
@@ -35,16 +37,19 @@ std::map<char, cv::Mat> load_font_images(const std::string &font_dir) {
 }
 
 // Compare two matrices and find the one with the minimum Euclidean distance
-std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &font_images) {
+std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &font_images)
+{
     double min_distance = std::numeric_limits<double>::max();
     char best_match_char = 0;
     cv::Mat best_match_img;
 
-    for (const auto &[char_code, font_image] : font_images) {
+    for (const auto &[char_code, font_image] : font_images)
+    {
         cv::Mat diff;
         cv::absdiff(segment, font_image, diff);
-        double distance = cv::norm(diff, cv::NORM_L2);
-        if (distance < min_distance) {
+        double distance = cv::norm(diff);
+        if (distance < min_distance)
+        {
             min_distance = distance;
             best_match_char = char_code;
             best_match_img = font_image;
@@ -54,16 +59,19 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
 }
 
 // Process a single frame
-void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_img_dir, const std::string &output_txt_dir) {
+void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_img_dir, const std::string &output_txt_dir)
+{
     cv::Mat gray_frame;
     cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
 
     cv::Mat output_image = cv::Mat::zeros(gray_frame.size(), gray_frame.type());
     std::vector<std::string> characters_grid;
 
-    for (int j = 0; j <= gray_frame.rows - font_size; j += font_size) {
+    for (int j = 0; j <= gray_frame.rows - font_size; j += font_size)
+    {
         std::string row_chars;
-        for (int i = 0; i <= gray_frame.cols - font_size; i += font_size) {
+        for (int i = 0; i <= gray_frame.cols - font_size; i += font_size)
+        {
             cv::Rect region(i, j, font_size, font_size);
             cv::Mat segment = gray_frame(region);
 
@@ -80,7 +88,8 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
 
     cv::imwrite(frame_filename, output_image);
     std::ofstream file(text_filename);
-    for (const auto &row : characters_grid) {
+    for (const auto &row : characters_grid)
+    {
         file << row << '\n';
     }
 
@@ -89,7 +98,8 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
 }
 
 // Main driver function
-int main() {
+int main()
+{
     std::string video_path = "SampleVideo.mp4";
     std::string output_img_dir = "output_images";
     std::string output_txt_dir = "output_text";
@@ -104,7 +114,8 @@ int main() {
     auto font_images = load_font_images(font_dir);
 
     cv::VideoCapture cap(video_path);
-    if (!cap.isOpened()) {
+    if (!cap.isOpened())
+    {
         std::cerr << "Error opening video file" << std::endl;
         return -1;
     }
@@ -112,13 +123,16 @@ int main() {
     std::vector<std::thread> threads;
     cv::Mat frame;
     int count = 0;
-    while (cap.read(frame)) {
+    while (cap.read(frame))
+    {
         threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, output_img_dir, output_txt_dir);
         count++;
     }
 
-    for (auto &th : threads) {
-        if (th.joinable()) th.join();
+    for (auto &th : threads)
+    {
+        if (th.joinable())
+            th.join();
     }
 
     cap.release();
