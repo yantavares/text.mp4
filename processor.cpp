@@ -8,16 +8,25 @@
 #include <mutex>
 #include <string>
 #include <cmath>
+#include <iomanip>
 #include <limits>
 
 namespace fs = std::filesystem;
 std::mutex io_mutex;
+
+std::string formatNumber(int num, int length) {
+    std::ostringstream oss;
+    oss << std::setw(length) << std::setfill('0') << num;
+    return oss.str();
+}
+
 
 // Function to load font images
 std::map<char, cv::Mat> load_font_images(const std::string &font_dir) {
     std::map<char, cv::Mat> font_images;
     for (const auto &entry : fs::directory_iterator(font_dir)) {
         if (entry.path().extension() == ".png") {
+            std::cout << entry.path().stem() << std::endl;
             char char_code = static_cast<char>(std::stoi(entry.path().stem()));
             font_images[char_code] = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
         }
@@ -66,8 +75,8 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
         characters_grid.push_back(row_chars);
     }
 
-    std::string frame_filename = output_img_dir + "/frame_" + std::to_string(count) + ".png";
-    std::string text_filename = output_txt_dir + "/frame_" + std::to_string(count) + ".txt";
+    std::string frame_filename = output_img_dir + "/frame_" + formatNumber(count, 10) + ".png";
+    std::string text_filename = output_txt_dir + "/frame_" + formatNumber(count, 10) + ".txt";
 
     cv::imwrite(frame_filename, output_image);
     std::ofstream file(text_filename);
@@ -104,7 +113,6 @@ int main() {
     cv::Mat frame;
     int count = 0;
     while (cap.read(frame)) {
-        if (count > 100) break;  // Limit to 100 frames to manage memory usage
         threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, output_img_dir, output_txt_dir);
         count++;
     }
