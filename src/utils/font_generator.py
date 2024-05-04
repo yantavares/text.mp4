@@ -41,10 +41,10 @@ if len(sys.argv) > 1:
     font = sys.argv[1]
 
 if len(sys.argv) > 2:
-    font_size = sys.argv[2]
+    font_size = int(sys.argv[2].replace(' ', ''))
 
-font_path = f'../../fonts/{font}.ttf'  # Path to the TTF font file
-output_dir = f'../../fonts/{font}_chars'  # Directory to save letter images
+font_path = f'fonts/{font}.ttf'  # Path to the TTF font file
+output_dir = f'fonts/{font}_chars'  # Directory to save letter images
 # Characters to render
 characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?-()[]{}<>:;\'"/\\@#$%^&*~`+=_|<>&'
 create_images_from_font(font_path, output_dir, characters,

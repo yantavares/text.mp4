@@ -99,7 +99,7 @@ font_size = 10
 if len(sys.argv) > 1:
     font = sys.argv[1]
 if len(sys.argv) > 2:
-    font_size = int(sys.argv[2])
+    font_size = int(sys.argv[2].replace(' ', ''))
 if len(sys.argv) > 3:
     video = sys.argv[3]
 
