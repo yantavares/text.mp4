@@ -77,7 +77,7 @@ def process_video(video_path, font_images, output_img_dir, output_txt_dir, font_
         os.makedirs(output_txt_dir)
 
     # Prepare frames for processing
-    while success and count <= 100:  # Limit to 101 frames to avoid loading too many into memory
+    while success:
         frames.append((frame, count, font_images, font_size,
                       output_img_dir, output_txt_dir))
         success, frame = vidcap.read()
