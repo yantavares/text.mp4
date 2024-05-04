@@ -28,3 +28,4 @@ output_video_path = 'output_video.mp4'  # Desired path for the output video
 fps = 24  # Frames per second of the output video
 
 create_video_from_frames(frame_dir, output_video_path, fps)
+create_video_from_frames(frame_dir + "_py", "output_video_py.mp4", fps)

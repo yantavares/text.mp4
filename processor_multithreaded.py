@@ -98,7 +98,7 @@ font_images = load_font_images(font_dir)
 # Process a video
 video_path = 'SampleVideo.mp4'
 output_img_dir = 'output_images_py'
-output_txt_dir = 'output_text'
+output_txt_dir = 'output_text_py'
 
 start = time.time()
 process_video(video_path, font_images, output_img_dir,
