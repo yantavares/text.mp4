@@ -149,18 +149,20 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
     }
 
     std::lock_guard<std::mutex> guard(io_mutex);
-    std::cout << "Processed frame " << count << std::endl;
 }
 
 int main()
 {
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::string video_path = "SampleVideo.mp4";
-    std::string output_img_dir = "output_images";
-    std::string output_txt_dir = "output_text";
+    std::string video = "SampleVideo.mp4";
+    std::string font = "ComicMono";
     int font_size = 10;
-    std::string font_dir = "fonts/ComicMono_chars";
+
+    std::string video_path = "video/" + video;
+    std::string output_img_dir = "output/frames";
+    std::string output_txt_dir = "output/text";
+    std::string font_dir = "fonts/" + font + "_chars";
 
     if (!fs::exists(output_img_dir))
         fs::create_directories(output_img_dir);
@@ -181,6 +183,8 @@ int main()
     int count = 0;
     while (cap.read(frame))
     {
+        std::cout << "Processing frame " << count << std::endl;
+
         threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, output_img_dir, output_txt_dir);
         count++;
     }
@@ -195,7 +199,8 @@ int main()
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::cout << "Video processing completed." << std::endl;
-    std::cout << "Processing took " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds." << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
+    std::cout << "Video processing completed in C++." << std::endl;
+    std::cout << "Processed " << count - 1 << " frames in " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds." << std::endl;
     return 0;
 }

@@ -1,7 +1,3 @@
-/output_images/
-/output_text/
+/output/
 /fonts/*_chars
-output_video.mp4
-output_video_py.mp4
-/output_images_py/
-/output_text_py/
+/bin/
