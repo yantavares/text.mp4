@@ -45,9 +45,7 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
 
     for (const auto &[char_code, font_image] : font_images)
     {
-        cv::Mat diff;
-        cv::absdiff(segment, font_image, diff);
-        double distance = cv::norm(diff);
+        double distance = cv::norm(segment, font_image, cv::NORM_L2);
         if (distance < min_distance)
         {
             min_distance = distance;
