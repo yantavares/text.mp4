@@ -21,7 +21,6 @@ std::string formatNumber(int num, int length)
     return oss.str();
 }
 
-// Function to load font images
 std::map<char, cv::Mat> load_font_images(const std::string &font_dir)
 {
     std::map<char, cv::Mat> font_images;
@@ -29,14 +28,41 @@ std::map<char, cv::Mat> load_font_images(const std::string &font_dir)
     {
         if (entry.path().extension() == ".png")
         {
-            char char_code = static_cast<char>(std::stoi(entry.path().stem()));
-            font_images[char_code] = cv::imread(entry.path(), cv::IMREAD_UNCHANGED);
+            std::string filename = entry.path().stem().string();
+            int char_code;
+            try
+            {
+                char_code = std::stoi(filename);
+            }
+            catch (const std::invalid_argument &ia)
+            {
+                std::cerr << "Invalid argument: " << ia.what() << '\n';
+                continue;
+            }
+            catch (const std::out_of_range &oor)
+            {
+                std::cerr << "Out of Range error: " << oor.what() << '\n';
+                continue;
+            }
+
+            if (char_code < 0 || char_code > 255)
+            {
+                std::cerr << "Character code out of valid range: " << char_code << '\n';
+                continue;
+            }
+
+            char char_code_char = static_cast<char>(char_code);
+            font_images[char_code_char] = cv::imread(entry.path(), cv::IMREAD_UNCHANGED);
+            if (font_images[char_code_char].empty())
+            {
+                std::cerr << "Failed to load image for char code " << char_code_char << " at path " << entry.path() << std::endl;
+                continue;
+            }
         }
     }
     return font_images;
 }
 
-// Compare two matrices and find the one with the minimum Euclidean distance
 std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &font_images)
 {
     double min_distance = std::numeric_limits<double>::max();
@@ -45,18 +71,29 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
 
     for (const auto &[char_code, font_image] : font_images)
     {
-        double distance = cv::norm(segment, font_image, cv::NORM_L2SQR);
-        if (distance < min_distance)
+        if (!segment.empty() && !font_image.empty() && segment.type() == font_image.type() && segment.size() == font_image.size())
         {
-            min_distance = distance;
-            best_match_char = char_code;
-            best_match_img = font_image;
+            double distance = cv::norm(segment, font_image, cv::NORM_L2);
+            if (distance < min_distance)
+            {
+                min_distance = distance;
+                best_match_char = char_code;
+                best_match_img = font_image;
+            }
         }
+        else
+        {
+            std::cerr << "Incompatible or empty images for char " << char_code << std::endl;
+        }
+    }
+    if (best_match_char <= 0 || best_match_char > 127)
+    {
+        std::cerr << "Invalid character match detected, using default." << std::endl;
+        best_match_char = '?'; // Default character if no valid match found
     }
     return {best_match_char, best_match_img};
 }
 
-// Process a single frame
 void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_img_dir, const std::string &output_txt_dir)
 {
     cv::Mat gray_frame;
@@ -84,18 +121,29 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
     std::string frame_filename = output_img_dir + "/frame_" + formatNumber(count, 10) + ".png";
     std::string text_filename = output_txt_dir + "/frame_" + formatNumber(count, 10) + ".txt";
 
-    cv::imwrite(frame_filename, output_image);
-    std::ofstream file(text_filename);
-    for (const auto &row : characters_grid)
+    bool isWritten = cv::imwrite(frame_filename, output_image);
+    if (!isWritten)
     {
-        file << row << '\n';
+        std::cerr << "Failed to write image to " << frame_filename << std::endl;
+    }
+
+    std::ofstream file(text_filename);
+    if (!file)
+    {
+        std::cerr << "Failed to open text file " << text_filename << std::endl;
+    }
+    else
+    {
+        for (const auto &row : characters_grid)
+        {
+            file << row << '\n';
+        }
     }
 
     std::lock_guard<std::mutex> guard(io_mutex);
     std::cout << "Processed frame " << count << std::endl;
 }
 
-// Main driver function
 int main()
 {
     std::string video_path = "SampleVideo.mp4";
