@@ -105,5 +105,5 @@ process_video(video_path, font_images, output_img_dir,
               output_txt_dir, font_size=10, max_workers=4)
 end = time.time()
 print("-------------------------------------------")
-print("Video processing complete in Python.")
+print("Video processing complete in Python3.")
 print(f'Processing took {end - start:.2f} seconds')
