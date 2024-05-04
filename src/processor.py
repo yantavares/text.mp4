@@ -4,6 +4,7 @@ import numpy as np
 import os
 from concurrent.futures import ProcessPoolExecutor
 import time
+import sys
 
 
 def load_font_images(font_dir):
@@ -92,18 +93,28 @@ def process_video(video_path, font_images, output_img_dir, output_txt_dir, font_
 
 # Directory setup
 font = 'ComicMono'
+video = 'SampleVideo'
+font_size = 10
+
+if len(sys.argv) > 1:
+    font = sys.argv[1]
+if len(sys.argv) > 2:
+    font_size = int(sys.argv[2])
+if len(sys.argv) > 3:
+    video = sys.argv[3]
+
 font_dir = f'fonts/{font}_chars'  # Directory containing the letter images
 font_images = load_font_images(font_dir)
 
 # Process a video
-video_path = 'SampleVideo.mp4'
-output_img_dir = 'output_images_py'
-output_txt_dir = 'output_text_py'
+video_path = 'video/' + video + '.mp4'
+output_img_dir = 'output/frames'
+output_txt_dir = 'output/text'
 
 start = time.time()
 process_video(video_path, font_images, output_img_dir,
-              output_txt_dir, font_size=10, max_workers=4)
+              output_txt_dir, font_size, max_workers=None)
 end = time.time()
 print("-------------------------------------------")
-print("Video processing complete in Python3.")
-print(f'Processing took {end - start:.2f} seconds')
+print("Video processing complete in Python3")
+print(f'Processing took {end - start:.2f} seconds.')
