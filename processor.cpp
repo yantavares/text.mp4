@@ -30,7 +30,7 @@ std::map<char, cv::Mat> load_font_images(const std::string &font_dir)
         if (entry.path().extension() == ".png")
         {
             char char_code = static_cast<char>(std::stoi(entry.path().stem()));
-            font_images[char_code] = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
+            font_images[char_code] = cv::imread(entry.path(), cv::IMREAD_UNCHANGED);
         }
     }
     return font_images;
@@ -45,7 +45,8 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
 
     for (const auto &[char_code, font_image] : font_images)
     {
-        double distance = cv::norm(segment, font_image, cv::NORM_L2);
+        cv::normalize(font_image, font_image, 0, 200, cv::NORM_MINMAX);
+        double distance = cv::norm(segment, font_image, cv::NORM_L2SQR);
         if (distance < min_distance)
         {
             min_distance = distance;
