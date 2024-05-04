@@ -158,7 +158,6 @@ int main(int argc, char *argv[])
     std::string video = "SampleVideo";
     std::string font = "ComicMono";
     int font_size = 10;
-    std::cout << "argc: " << argc << std::endl;
 
     try
     {

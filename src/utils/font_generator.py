@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 import sys
+import shutil
 
 
 def textsize(text, font):
@@ -17,7 +18,8 @@ def create_images_from_font(font_path, output_dir, characters, image_size=(10, 1
 
     # Create output directory if it doesn't exist
     if os.path.exists(output_dir):
-        return
+        print(f"Removing existing directory: {output_dir}")
+        shutil.rmtree(output_dir)
 
     os.makedirs(output_dir)
 
