@@ -10,6 +10,7 @@
 #include <cmath>
 #include <iomanip>
 #include <limits>
+#include <chrono>
 
 namespace fs = std::filesystem;
 std::mutex io_mutex;
@@ -77,7 +78,10 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
         {
             cv::Mat font_image_inv;
             cv::bitwise_not(font_image, font_image_inv); // For some reason, the images need to be inverted for the comparison to work
+            cv::bitwise_not(segment, segment);           // Same thing here
+
             double distance = cv::norm(segment, font_image_inv, cv::NORM_L2);
+
             if (distance < min_distance)
             {
                 min_distance = distance;
@@ -150,6 +154,8 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
 
 int main()
 {
+    auto start = std::chrono::high_resolution_clock::now();
+
     std::string video_path = "SampleVideo.mp4";
     std::string output_img_dir = "output_images";
     std::string output_txt_dir = "output_text";
@@ -186,6 +192,10 @@ int main()
     }
 
     cap.release();
+
+    auto end = std::chrono::high_resolution_clock::now();
+
     std::cout << "Video processing completed." << std::endl;
+    std::cout << "Processing took " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds." << std::endl;
     return 0;
 }
