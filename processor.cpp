@@ -52,12 +52,14 @@ std::map<char, cv::Mat> load_font_images(const std::string &font_dir)
             }
 
             char char_code_char = static_cast<char>(char_code);
-            font_images[char_code_char] = cv::imread(entry.path(), cv::IMREAD_UNCHANGED);
-            if (font_images[char_code_char].empty())
+            cv::Mat img = cv::imread(entry.path(), cv::IMREAD_GRAYSCALE);
+            if (img.empty())
             {
                 std::cerr << "Failed to load image for char code " << char_code_char << " at path " << entry.path() << std::endl;
                 continue;
             }
+
+            font_images[char_code_char] = img;
         }
     }
     return font_images;
@@ -73,7 +75,9 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
     {
         if (!segment.empty() && !font_image.empty() && segment.type() == font_image.type() && segment.size() == font_image.size())
         {
-            double distance = cv::norm(segment, font_image, cv::NORM_L2);
+            cv::Mat font_image_inv;
+            cv::bitwise_not(font_image, font_image_inv); // For some reason, the images need to be inverted for the comparison to work
+            double distance = cv::norm(segment, font_image_inv, cv::NORM_L2);
             if (distance < min_distance)
             {
                 min_distance = distance;
