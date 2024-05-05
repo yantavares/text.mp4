@@ -107,7 +107,7 @@ font_dir = f'fonts/{font}_chars'  # Directory containing the letter images
 font_images = load_font_images(font_dir)
 
 # Process a video
-video_path = 'video/' + video + '.mp4'
+video_path = 'videos/' + video + '.mp4'
 output_img_dir = 'output/frames'
 output_txt_dir = 'output/text'
 

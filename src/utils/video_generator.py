@@ -25,7 +25,7 @@ def create_video_from_frames(frame_dir, output_video_path, fps=24):
 # Directory and video settings
 frame_dir = 'output/frames'  # Directory containing frames
 # Desired path for the output video
-output_video_path = 'output/videos/output_video.mp4'
+output_video_path = 'output/text.mp4'
 fps = 24  # Frames per second of the output video
 
 create_video_from_frames(frame_dir, output_video_path, fps)

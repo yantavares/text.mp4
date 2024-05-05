@@ -164,22 +164,22 @@ int main(int argc, char *argv[])
         if (argc > 1)
             font = argv[1];
         if (argc > 2)
-            font_size = std::stoi(argv[2]); // Convert argv[2] to int
+            font_size = std::stoi(argv[2]);
         if (argc > 3)
             video = argv[3];
     }
     catch (const std::invalid_argument &ia)
     {
         std::cerr << "Invalid argument: " << ia.what() << '\n';
-        return 1; // Return non-zero value to indicate error
+        return 1;
     }
     catch (const std::out_of_range &oor)
     {
         std::cerr << "Argument out of range: " << oor.what() << '\n';
-        return 1; // Return non-zero value to indicate error
+        return 1;
     }
 
-    std::string video_path = "video/" + video + ".mp4";
+    std::string video_path = "videos/" + video + ".mp4";
     std::string output_img_dir = "output/frames";
     std::string output_txt_dir = "output/text";
     std::string font_dir = "fonts/" + font + "_chars";
@@ -209,8 +209,11 @@ int main(int argc, char *argv[])
         count++;
     }
 
+    std::cout << "Joining threads..." << std::endl;
+
     for (auto &th : threads)
     {
+
         if (th.joinable())
             th.join();
     }
