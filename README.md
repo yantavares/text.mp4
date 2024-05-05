@@ -71,7 +71,7 @@ _Observation_: If no input is provided, the default values will be used.
 
 ## Sample video example
 
-![Video Example](public/sampletxt.GIF)
+![Video Example](public/sampletxt.gif)
 
 ## License
 
