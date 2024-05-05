@@ -14,7 +14,7 @@ PYTHON = python3
 UTLSCRIPT1 = $(SRCDIR)/utils/font_generator.py
 UTLSCRIPT2 = $(SRCDIR)/utils/video_generator.py
 
-.PHONY: all choose run-cpp run-python clean
+.PHONY: all choose run-cpp run-python clean install
 
 all: choose
 
@@ -61,3 +61,37 @@ run-python:
 
 clean:
 	@rm -rf $(BINDIR)
+
+install:
+	@echo "Installing necessary packages..."
+	@if ! command -v make >/dev/null 2>&1; then \
+		echo "Installing make..."; \
+		sudo apt-get install -y make; \
+	else \
+		echo "Make is already installed"; \
+	fi
+	@if ! command -v $(CXX) >/dev/null 2>&1; then \
+		echo "Installing g++..."; \
+		sudo apt-get install -y g++; \
+	else \
+		echo "g++ is already installed"; \
+	fi
+	@if ! dpkg -s libopencv-dev >/dev/null 2>&1; then \
+		echo "Installing libopencv-dev..."; \
+		sudo apt-get install -y libopencv-dev; \
+	else \
+		echo "libopencv-dev is already installed"; \
+	fi
+	@if ! command -v $(PYTHON) >/dev/null 2>&1; then \
+		echo "Error: Python3 is not installed. You can install it by running the command:"; \
+		echo "  sudo apt-get install -y python3"; \
+	else \
+		echo "Python3 is already installed"; \
+	fi
+	@if ! $(PYTHON) -m pip >/dev/null 2>&1; then \
+		echo "Error: pip for Python3 is not installed. You can install it by running the command:"; \
+		echo "  sudo apt-get install -y python3-pip"; \
+	else \
+		echo "pip for Python3 is already installed"; \
+		$(PYTHON) -m pip install -r requirements.txt; \
+	fi
