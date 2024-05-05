@@ -5,3 +5,4 @@
 !/videos/SampleVideo.mp4
 /fonts/*
 !/fonts/ComicMono.ttf
+.DS_Store
