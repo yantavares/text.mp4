@@ -1,4 +1,7 @@
 /output/
-/fonts/*_chars
 /bin/
 .vscode/
+/videos/*
+!/videos/SampleVideo.mp4
+/fonts/*
+!/fonts/ComicMono.ttf
