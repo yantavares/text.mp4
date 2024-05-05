@@ -9,7 +9,7 @@
 
 - OpenCV4
 - Python 3.x (for Python engine)
-- C++ compiler (for C++ engine)
+- g++ compiler (for C++ engine)
 - GNU `make`
 
 ## Setup
