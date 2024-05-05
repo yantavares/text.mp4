@@ -8,11 +8,11 @@
 ## Requirements
 
 - OpenCV4
-- Python 3.x (for Python engine)
 - g++ compiler (for C++ engine)
 - GNU `make`
+- Python 3.x (for Python engine) (Optional)
 
-## Setup
+## Setup (UNIX systems)
 
 1. Clone the repository:
 
@@ -20,22 +20,28 @@
    git clone https://github.com/yantavares/text.mp4.git
    cd text.mp4
    ```
-
-2. Install OpenCV4 (for C++ engine):
+   
+2. Install GNU `make` and `g++` compiler (already present in most UNIX systems):
+   ```bash
+   sudo apt-get install make
+   sudo apt-get install g++
+   ```
+   
+3. Install OpenCV4 (for C++ engine):
 
    ```bash
    sudo apt-get install libopencv-dev
    ```
 
-3. **(Optional)** Install required Python dependencies (for Python engine):
+4. **(Optional)** Install required Python dependencies (for Python engine):
 
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **(Optional)** Add your desired video file to the `videos` directory, or use the provided `SampleVideo.mp4`.
+5. **(Optional)** Add your desired video file to the `videos` directory, or use the provided `SampleVideo.mp4`.
 
-5. **(Optional)** Add your desired font (.ttf files) to the `fonts` directory, or use the provided `ComicMono.ttf`.
+6. **(Optional)** Add your desired font (.ttf files) to the `fonts` directory, or use the provided `ComicMono.ttf`.
 
 ## Usage
 
