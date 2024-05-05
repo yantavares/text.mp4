@@ -2,9 +2,9 @@
 
 **text.mp4** is a project that takes a video as input, converts each frame into ASCII art using any font you want, and generates a text-based video output along with the ASCII frames.
 
-![Input Frame](public/frameExampleInput.png)
+### Example
 
-![Output Frame](public/frameExampleOutput.png)
+![Video Example](public/sampletxt.gif)
 
 ## Requirements
 
@@ -68,10 +68,6 @@ _Observation_: If no input is provided, the default values will be used.
   - `frames/`: Each frame as an ASCII image.
   - `text/`: ASCII text representation of each frame as a text file.
   - `text.mp4`: The final text-based video output.
-
-## Sample video example
-
-![Video Example](public/sampletxt.gif)
 
 ## License
 
