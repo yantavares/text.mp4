@@ -46,6 +46,7 @@ run-cpp: $(BINDIR)/$(TARGET)
 	@if [ "$(SHOULD_PLAY)" = "Y" ] || [ "$(SHOULD_PLAY)" = "y" ]; then \
 		$(MAKE) play; \
 	fi
+	@echo "Done! Full video (in native dimensions) can be found at 'ouput/text.mp4'"
 
 play:
 	@$(PLAY_SCRIPT)
