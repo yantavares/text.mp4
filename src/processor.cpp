@@ -12,8 +12,25 @@
 #include <limits>
 #include <chrono>
 
+#include <sys/ioctl.h>
+#include <unistd.h>
+
 namespace fs = std::filesystem;
 std::mutex io_mutex;
+
+std::pair<int, int> get_terminal_size()
+{
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
+    {
+        return {w.ws_col, w.ws_row};
+    }
+    else
+    {
+        std::cerr << "Unable to detect terminal size. Defaulting to 80x24." << std::endl;
+        return {80, 24};
+    }
+}
 
 std::string formatNumber(int num, int length)
 {
@@ -102,10 +119,28 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
     return {best_match_char, best_match_img};
 }
 
-void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_img_dir, const std::string &output_txt_dir)
+void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_img_dir, const std::string &output_txt_dir, std::string resize_option)
 {
     cv::Mat gray_frame;
-    cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
+
+    if (resize_option == "f")
+    {
+        auto [terminal_width, terminal_height] = get_terminal_size();
+
+        cv::Mat resized_frame;
+        cv::resize(frame, resized_frame, cv::Size(terminal_width * font_size, terminal_height * font_size));
+
+        cvtColor(resized_frame, gray_frame, cv::COLOR_BGR2GRAY);
+    }
+    else if (resize_option == "o")
+    {
+        cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
+    }
+    else
+    {
+        std::cerr << "Invalid resize option " << resize_option << " Defaulting to 'original'." << std::endl;
+        cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
+    }
 
     cv::Mat output_image = cv::Mat::zeros(gray_frame.size(), gray_frame.type());
     std::vector<std::string> characters_grid;
@@ -119,20 +154,26 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
             cv::Mat segment = gray_frame(region);
 
             auto [best_match_char, best_match_img] = compare_matrices(segment, font_images);
-            cv::Mat destination = output_image(cv::Rect(i, j, font_size, font_size));
-            best_match_img.copyTo(destination);
+            if (resize_option != "f")
+            {
+                cv::Mat destination = output_image(cv::Rect(i, j, font_size, font_size));
+                best_match_img.copyTo(destination);
+            }
             row_chars += best_match_char;
         }
         characters_grid.push_back(row_chars);
     }
 
-    std::string frame_filename = output_img_dir + "/frame_" + formatNumber(count, 10) + ".png";
     std::string text_filename = output_txt_dir + "/frame_" + formatNumber(count, 10) + ".txt";
+    std::string frame_filename = output_img_dir + "/frame_" + formatNumber(count, 10) + ".png";
 
-    bool isWritten = cv::imwrite(frame_filename, output_image);
-    if (!isWritten)
+    if (resize_option != "f")
     {
-        std::cerr << "Failed to write image to " << frame_filename << std::endl;
+        bool isWritten = cv::imwrite(frame_filename, output_image);
+        if (!isWritten)
+        {
+            std::cerr << "Failed to write image to " << frame_filename << std::endl;
+        }
     }
 
     std::ofstream file(text_filename);
@@ -155,9 +196,10 @@ int main(int argc, char *argv[])
 {
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::string video = "SampleVideo";
-    std::string font = "ComicMono";
-    int font_size = 10;
+    std::string video;
+    std::string font;
+    int font_size;
+    std::string should_play;
 
     try
     {
@@ -167,6 +209,20 @@ int main(int argc, char *argv[])
             font_size = std::stoi(argv[2]);
         if (argc > 3)
             video = argv[3];
+        if (argc > 4)
+        {
+            should_play = argv[4];
+            if (should_play == "Y")
+                should_play = "y";
+            else if (should_play == "N")
+                should_play = "n";
+
+            if (should_play != "y" && should_play != "n")
+            {
+                std::cerr << "Invalid argument for should_play. Defaulting to 'y'." << std::endl;
+                should_play = "y";
+            }
+        }
     }
     catch (const std::invalid_argument &ia)
     {
@@ -182,12 +238,15 @@ int main(int argc, char *argv[])
     std::string video_path = "videos/" + video + ".mp4";
     std::string output_img_dir = "output/frames";
     std::string output_txt_dir = "output/text";
+    std::string output_txt_resized_dir = "output/text_resized";
     std::string font_dir = "fonts/" + font + "_chars";
 
     if (!fs::exists(output_img_dir))
         fs::create_directories(output_img_dir);
     if (!fs::exists(output_txt_dir))
         fs::create_directories(output_txt_dir);
+    if (!fs::exists(output_txt_resized_dir))
+        fs::create_directories(output_txt_resized_dir);
 
     auto font_images = load_font_images(font_dir);
 
@@ -205,7 +264,12 @@ int main(int argc, char *argv[])
     {
         std::cout << "Processing frame " << count << std::endl;
 
-        threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, output_img_dir, output_txt_dir);
+        threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, output_img_dir, output_txt_dir, "o");
+        if (should_play == "y")
+        {
+            std::cout << "Resizing frame " << count << " to fit terminal" << std::endl;
+            threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, "", output_txt_resized_dir, "f");
+        }
         count++;
     }
 
