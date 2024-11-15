@@ -52,9 +52,10 @@ Observation: The `make play` command will only work on UNIX systems and will aut
 1. **Select Font**:
    - Default is `Comic Mono`.
 2. **Choose Font Size**:
+   - **Must be equal to terminal font size**
    - Choose a font size between 2 and 20.
    - Default is 10.
-3. **Provide Video Filename**:
+4. **Provide Video Filename**:
    - You will be prompted to choose a video file from the `videos` directory.
    - Default is `SampleVideo.mp4`.
 
