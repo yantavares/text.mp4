@@ -1,6 +1,6 @@
-# text.mp4
+# video.txt
 
-**text.mp4** is a project that takes a video as input, converts each frame into ASCII art using any font you want, and generates a text-based video output along with the ASCII frames.
+**video.txt** is a project that takes a video as input, converts each frame into ASCII art using any font you want, and generates a text-based video output inside your terminal along with the ASCII frames.
 
 **Example** (takes a few seconds to load):
 ![Video Example](public/sampletxt.gif)
@@ -17,8 +17,8 @@
 1. Clone the repository:
 
 ```bash
-  git clone https://github.com/yantavares/text.mp4.git
-  cd text.mp4
+  git clone https://github.com/yantavares/video.txt.git
+  cd video.txt
 ```
 
 2. If necessary, make `play.sh` executable:
