@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # Directory containing your text frames
-FRAME_DIR="output/text_resized"
+FRAME_DIR="output"
 
 
 # Display each frame in sequence
 for frame in "$FRAME_DIR"/*.txt; do
     clear
     cat "$frame"
-    sleep 0.06
+    sleep 0.04
 done

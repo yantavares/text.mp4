@@ -2,7 +2,6 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <thread>
 #include <filesystem>
 #include <map>
 #include <mutex>
@@ -11,12 +10,71 @@
 #include <iomanip>
 #include <limits>
 #include <chrono>
-
+#include <thread>
+#include <queue>
+#include <condition_variable>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <atomic>
 
 namespace fs = std::filesystem;
 std::mutex io_mutex;
+
+class ThreadPool
+{
+public:
+    ThreadPool(size_t threads);
+    ~ThreadPool();
+    template <class F>
+    void enqueue(F &&f);
+
+private:
+    std::vector<std::thread> workers;
+    std::queue<std::function<void()>> tasks;
+    std::mutex queue_mutex;
+    std::condition_variable condition;
+    bool stop;
+};
+
+ThreadPool::ThreadPool(size_t threads) : stop(false)
+{
+    for (size_t i = 0; i < threads; ++i)
+        workers.emplace_back([this]
+                             {
+            for (;;) {
+                std::function<void()> task;
+                {
+                    std::unique_lock<std::mutex> lock(this->queue_mutex);
+                    this->condition.wait(lock, [this] { return this->stop || !this->tasks.empty(); });
+                    if (this->stop && this->tasks.empty())
+                        return;
+                    task = std::move(this->tasks.front());
+                    this->tasks.pop();
+                }
+                task();
+            } });
+}
+
+ThreadPool::~ThreadPool()
+{
+    {
+        std::unique_lock<std::mutex> lock(queue_mutex);
+        stop = true;
+    }
+    condition.notify_all();
+    for (std::thread &worker : workers)
+        worker.join();
+}
+
+template <class F>
+void ThreadPool::enqueue(F &&f)
+{
+    {
+        std::unique_lock<std::mutex> lock(queue_mutex);
+        tasks.emplace(std::forward<F>(f));
+    }
+    condition.notify_one();
+}
 
 std::pair<int, int> get_terminal_size()
 {
@@ -83,11 +141,10 @@ std::map<char, cv::Mat> load_font_images(const std::string &font_dir)
     return font_images;
 }
 
-std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &font_images)
+char compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &font_images)
 {
     double min_distance = std::numeric_limits<double>::max();
     char best_match_char = 0;
-    cv::Mat best_match_img;
 
     for (const auto &[char_code, font_image] : font_images)
     {
@@ -103,7 +160,6 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
             {
                 min_distance = distance;
                 best_match_char = char_code;
-                best_match_img = font_image;
             }
         }
         else
@@ -116,33 +172,19 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
         std::cerr << "Invalid character match detected, using default." << std::endl;
         best_match_char = '?'; // Default character if no valid match found
     }
-    return {best_match_char, best_match_img};
+    return best_match_char;
 }
 
-void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_img_dir, const std::string &output_txt_dir, std::string resize_option)
+void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_txt_dir)
 {
     cv::Mat gray_frame;
 
-    if (resize_option == "f")
-    {
-        auto [terminal_width, terminal_height] = get_terminal_size();
+    auto [terminal_width, terminal_height] = get_terminal_size();
+    cv::Mat resized_frame;
 
-        cv::Mat resized_frame;
-        cv::resize(frame, resized_frame, cv::Size(terminal_width * font_size, terminal_height * font_size));
+    cv::resize(frame, resized_frame, cv::Size(terminal_width * font_size, terminal_height * font_size));
+    cvtColor(resized_frame, gray_frame, cv::COLOR_BGR2GRAY);
 
-        cvtColor(resized_frame, gray_frame, cv::COLOR_BGR2GRAY);
-    }
-    else if (resize_option == "o")
-    {
-        cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
-    }
-    else
-    {
-        std::cerr << "Invalid resize option " << resize_option << " Defaulting to 'original'." << std::endl;
-        cvtColor(frame, gray_frame, cv::COLOR_BGR2GRAY);
-    }
-
-    cv::Mat output_image = cv::Mat::zeros(gray_frame.size(), gray_frame.type());
     std::vector<std::string> characters_grid;
 
     for (int j = 0; j <= gray_frame.rows - font_size; j += font_size)
@@ -153,43 +195,25 @@ void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat
             cv::Rect region(i, j, font_size, font_size);
             cv::Mat segment = gray_frame(region);
 
-            auto [best_match_char, best_match_img] = compare_matrices(segment, font_images);
-            if (resize_option != "f")
-            {
-                cv::Mat destination = output_image(cv::Rect(i, j, font_size, font_size));
-                best_match_img.copyTo(destination);
-            }
+            char best_match_char = compare_matrices(segment, font_images);
             row_chars += best_match_char;
         }
         characters_grid.push_back(row_chars);
     }
 
     std::string text_filename = output_txt_dir + "/frame_" + formatNumber(count, 10) + ".txt";
-    std::string frame_filename = output_img_dir + "/frame_" + formatNumber(count, 10) + ".png";
-
-    if (resize_option != "f")
-    {
-        bool isWritten = cv::imwrite(frame_filename, output_image);
-        if (!isWritten)
-        {
-            std::cerr << "Failed to write image to " << frame_filename << std::endl;
-        }
-    }
 
     std::ofstream file(text_filename);
     if (!file)
     {
         std::cerr << "Failed to open text file " << text_filename << std::endl;
-    }
-    else
-    {
-        for (const auto &row : characters_grid)
-        {
-            file << row << '\n';
-        }
+        return;
     }
 
-    std::lock_guard<std::mutex> guard(io_mutex);
+    for (const auto &row : characters_grid)
+    {
+        file << row << '\n';
+    }
 }
 
 int main(int argc, char *argv[])
@@ -199,7 +223,6 @@ int main(int argc, char *argv[])
     std::string video;
     std::string font;
     int font_size;
-    std::string should_play;
 
     try
     {
@@ -209,20 +232,6 @@ int main(int argc, char *argv[])
             font_size = std::stoi(argv[2]);
         if (argc > 3)
             video = argv[3];
-        if (argc > 4)
-        {
-            should_play = argv[4];
-            if (should_play == "Y")
-                should_play = "y";
-            else if (should_play == "N")
-                should_play = "n";
-
-            if (should_play != "y" && should_play != "n")
-            {
-                std::cerr << "Invalid argument for should_play. Defaulting to 'y'." << std::endl;
-                should_play = "y";
-            }
-        }
     }
     catch (const std::invalid_argument &ia)
     {
@@ -236,17 +245,11 @@ int main(int argc, char *argv[])
     }
 
     std::string video_path = "videos/" + video + ".mp4";
-    std::string output_img_dir = "output/frames";
-    std::string output_txt_dir = "output/text";
-    std::string output_txt_resized_dir = "output/text_resized";
+    std::string output_txt_dir = "output";
     std::string font_dir = "fonts/" + font + "_chars";
 
-    if (!fs::exists(output_img_dir))
-        fs::create_directories(output_img_dir);
     if (!fs::exists(output_txt_dir))
         fs::create_directories(output_txt_dir);
-    if (!fs::exists(output_txt_resized_dir))
-        fs::create_directories(output_txt_resized_dir);
 
     auto font_images = load_font_images(font_dir);
 
@@ -257,37 +260,39 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    std::vector<std::thread> threads;
+    ThreadPool pool(std::thread::hardware_concurrency());
+    std::atomic<int> completed_tasks{0};
+
     cv::Mat frame;
     int count = 0;
+
     while (cap.read(frame))
     {
-        std::cout << "Processing frame " << count << std::endl;
+        cv::Mat frame_copy = frame.clone();
+        int current_count = count++;
 
-        threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, output_img_dir, output_txt_dir, "o");
-        if (should_play == "y")
-        {
-            std::cout << "Resizing frame " << count << " to fit terminal" << std::endl;
-            threads.emplace_back(process_frame, frame.clone(), count, std::ref(font_images), font_size, "", output_txt_resized_dir, "f");
-        }
-        count++;
-    }
-
-    std::cout << "Joining threads..." << std::endl;
-
-    for (auto &th : threads)
-    {
-
-        if (th.joinable())
-            th.join();
+        pool.enqueue([=, &completed_tasks]()
+                     {
+            {
+                std::lock_guard<std::mutex> guard(io_mutex);
+                std::cout << "Processing frame " << current_count << std::endl;
+            }
+            process_frame(frame_copy, current_count, std::ref(font_images), font_size, output_txt_dir);
+            completed_tasks.fetch_add(1, std::memory_order_relaxed); });
     }
 
     cap.release();
 
-    auto end = std::chrono::high_resolution_clock::now();
+    while (completed_tasks.load(std::memory_order_relaxed) < count)
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
 
+    auto end = std::chrono::high_resolution_clock::now();
     std::cout << "----------------------------------------" << std::endl;
     std::cout << "Video processing completed in C++." << std::endl;
-    std::cout << "Processed " << count - 1 << " frames in " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds." << std::endl;
+    std::cout << "Processed " << count << " frames in "
+              << std::chrono::duration_cast<std::chrono::seconds>(end - start).count()
+              << " seconds." << std::endl;
     return 0;
 }
