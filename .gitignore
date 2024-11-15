@@ -6,3 +6,4 @@
 /fonts/*
 !/fonts/ComicMono.ttf
 .DS_Store
+__pycache__/
