@@ -22,6 +22,9 @@ choose:
 	@echo "--------------------------"
 	@echo "| Processing Engine Menu |"
 	@echo "--------------------------"
+	@echo ""
+	@echo "!! Make terminal fullscreen for better results. !!"
+	@echo ""
 	@read -p "Enter the font name [default: ComicMono]: " font; \
 	read -p "Enter video name [default: SampleVideo]: " video; \
 	read -p "Enter font size (WARNING: Must be equal to terminal font size!) [default: 11]: " fontsize; \

@@ -76,20 +76,6 @@ void ThreadPool::enqueue(F &&f)
     condition.notify_one();
 }
 
-std::pair<int, int> get_terminal_size()
-{
-    struct winsize w;
-    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
-    {
-        return {w.ws_col, w.ws_row};
-    }
-    else
-    {
-        std::cerr << "Unable to detect terminal size. Defaulting to 80x24." << std::endl;
-        return {80, 24};
-    }
-}
-
 std::string formatNumber(int num, int length)
 {
     std::ostringstream oss;
@@ -173,6 +159,25 @@ char compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &fon
         best_match_char = '?'; // Default character if no valid match found
     }
     return best_match_char;
+}
+
+std::pair<int, int> get_terminal_size()
+{
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0)
+    {
+        if (w.ws_col < 80 || w.ws_row < 20)
+        {
+            std::cerr << "Warning: Terminal size (" << w.ws_col << "x" << w.ws_row << ") is too small for optimal display. Consider resizing." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+        return {w.ws_col, w.ws_row};
+    }
+    else
+    {
+        std::cerr << "Unable to detect terminal size. Defaulting to 80x24." << std::endl;
+        return {80, 24};
+    }
 }
 
 void process_frame(const cv::Mat &frame, int count, const std::map<char, cv::Mat> &font_images, int font_size, const std::string &output_txt_dir)
