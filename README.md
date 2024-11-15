@@ -12,6 +12,7 @@
 - g++ compiler (for C++ engine)
 - Python 3.x (for Python engine and video linking)
 - pip3 (for installing Python dependencies)
+- vtk (if not installed already)
 
 ## Setup (UNIX systems)
 
