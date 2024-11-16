@@ -86,7 +86,7 @@ std::pair<char, cv::Mat> compare_matrices(const cv::Mat &segment, const std::map
         {
             cv::bitwise_not(segment, segment); // Not sure why, but this works better
 
-            double distance = cv::norm(segment, font_image, cv::NORM_L2);
+            double distance = cv::norm(segment, font_image, cv::NORM_L2SQR);
             if (distance < min_distance)
             {
                 min_distance = distance;
