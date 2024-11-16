@@ -31,10 +31,11 @@ choose:
 	@read -p "Enter the font name [default: ComicMono]: " font; \
 	read -p "MODE: Play in Terminal (1) | Save mp4 file (2) [default: 1]: " mode; \
 	read -p "Enter video name [default: SampleVideo]: " video; \
-	read -p "Enter font size [default: 11]: " fontsize; \
-	if [ "$$mode" = "1" ]; then \
+	if [ "$$mode" = "1" ] || [ "$$mode" = "" ]; then \
+		echo ""; \
 		echo "(WARNING: Must be equal to terminal font size!)"; \
 	fi; \
+	read -p "Enter font size [default: 11]: " fontsize; \
 	font=$${font:-$(FONT)}; \
 	video=$${video:-$(VIDEO)}; \
 	fontsize=$${fontsize:-$(FONTSIZE)}; \
