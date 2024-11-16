@@ -48,6 +48,6 @@ if len(sys.argv) > 2:
 font_path = f'fonts/{font}.ttf'  # Path to the TTF font file
 output_dir = f'fonts/{font}_chars'  # Directory to save letter images
 # Characters to render
-characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,!?-()[]{}<>:;\'"/\\@#$%^&*~`+=_|<>&'
+characters = 'N@#W$9876543210?!abc;:+=-,._ '
 create_images_from_font(font_path, output_dir, characters,
                         (font_size, font_size), font_size)
