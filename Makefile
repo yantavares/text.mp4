@@ -32,8 +32,8 @@ choose:
 	read -p "MODE: Play in Terminal (1) | Save mp4 file (2) [default: 1]: " mode; \
 	read -p "Enter video name [default: SampleVideo]: " video; \
 	read -p "Enter font size [default: 11]: " fontsize; \
-	@if ["$(MODE)" = "1"] then \
-		echo "(WARNING: Must be equal to terminal font size!)" \
+	if [ "$$mode" = "1" ]; then \
+		echo "(WARNING: Must be equal to terminal font size!)"; \
 	fi; \
 	font=$${font:-$(FONT)}; \
 	video=$${video:-$(VIDEO)}; \
@@ -53,13 +53,14 @@ $(BINDIR)/$(TARGET): $(CPPSRC) $(CPPSRC2)
 run-cpp: $(BINDIR)/$(TARGET)
 	@echo "Running C++ program with font: '$(FONT)', font size: '$(FONTSIZE)', video: '$(VIDEO)'"
 	@$(PYTHON) $(UTLSCRIPT1) "$(FONT)" "$(FONTSIZE)"
-	@./$(BINDIR)/$(TARGET) "$(FONT)" "$(FONTSIZE)" "$(VIDEO)" 
+	@./$(BINDIR)/$(TARGET) "$(FONT)" "$(FONTSIZE)" "$(VIDEO)"
 	@if [ "$(MODE)" = "1" ]; then \
 		$(MAKE) play; \
 	else \
 		$(PYTHON) $(UTLSCRIPT2) "$(VIDEO)" "$(FONT)" "$(FONTSIZE)"; \
 		echo "Done! Full video (in native dimensions) can be found at '$(OUTPUTDIR)/text.mp4'"; \
 	fi
+
 
 play:
 	@$(PLAY_SCRIPT)

@@ -136,11 +136,9 @@ char compare_matrices(const cv::Mat &segment, const std::map<char, cv::Mat> &fon
     {
         if (!segment.empty() && !font_image.empty() && segment.type() == font_image.type() && segment.size() == font_image.size())
         {
-            cv::Mat font_image_inv;
-            cv::bitwise_not(font_image, font_image_inv); // For some reason, the images need to be inverted for the comparison to work
-            cv::bitwise_not(segment, segment);           // Same thing here
+            cv::bitwise_not(segment, segment); // Not sure why, but this works better
 
-            double distance = cv::norm(segment, font_image_inv, cv::NORM_L2);
+            double distance = cv::norm(segment, font_image, cv::NORM_L2);
 
             if (distance < min_distance)
             {
